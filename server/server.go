@@ -2,14 +2,15 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	"github.com/tMinamiii/go-http-server/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -18,9 +19,22 @@ type Server struct {
 	l   net.Listener
 }
 
-func NewServer(l net.Listener, mux http.Handler) *Server {
+func NewServer(router http.Handler) *Server {
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("failed to open config %v", err)
+	}
+
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
+	if err != nil {
+		log.Fatalf("failed to listen port %d: %v", cfg.Port, err)
+	}
+
+	url := fmt.Sprintf("http://%s", l.Addr().String())
+	log.Printf("start with: %v", url)
+
 	return &Server{
-		srv: &http.Server{Handler: mux},
+		srv: &http.Server{Handler: router},
 		l:   l,
 	}
 }
@@ -38,25 +52,11 @@ func (s *Server) Run(ctx context.Context) error {
 		return nil
 	})
 
+	// graceful shutdown when catches interrupt signal or terminate signal
 	<-ctx.Done()
 	if err := s.srv.Shutdown(context.Background()); err != nil {
 		log.Printf("failed to shutdown: %+v", err)
 	}
-	return eg.Wait()
-}
-
-func (s *Server) GracefulShutdown() {
-	// シグナルハンドリング
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
-
-	// コンテキストを設定してGraceful Shutdownを実行する
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	if err := s.srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Could not gracefully shutdown the server: %v\n", err)
-	}
 	log.Println("Server stopped.")
+	return eg.Wait()
 }
