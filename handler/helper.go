@@ -15,6 +15,14 @@ type Context struct {
 	Params         map[string]string
 }
 
+func NewContext(w http.ResponseWriter, r *http.Request, params map[string]string) Context {
+	return Context{
+		ResponseWriter: w,
+		Request:        r,
+		Params:         params,
+	}
+}
+
 type ErrResponse struct {
 	Message string   `json:"message"`
 	Details []string `json:"details,omitempty"`

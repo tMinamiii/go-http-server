@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tMinamiii/go-http-server/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -20,14 +19,9 @@ type Server struct {
 }
 
 func NewServer(router http.Handler) *Server {
-	cfg, err := config.New()
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", 8080))
 	if err != nil {
-		log.Fatalf("failed to open config %v", err)
-	}
-
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
-	if err != nil {
-		log.Fatalf("failed to listen port %d: %v", cfg.Port, err)
+		log.Fatalf("failed to listen port %d: %v", 8080, err)
 	}
 
 	url := fmt.Sprintf("http://%s", l.Addr().String())

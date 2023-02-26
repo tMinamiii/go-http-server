@@ -30,11 +30,7 @@ func (hr *HTTPRouter) Handler() http.Handler {
 		router.HandleFunc(path.String(), func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == fn.Method {
 				params := hr.getPathParams(r.URL.Path, path.String())
-				c := handler.Context{
-					ResponseWriter: w,
-					Request:        r,
-					Params:         params,
-				}
+				c := handler.NewContext(w, r, params)
 				fn.Handler(c)
 				return
 			}
