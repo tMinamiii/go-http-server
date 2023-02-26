@@ -12,7 +12,26 @@ type ErrResponse struct {
 	Details []string `json:"details,omitempty"`
 }
 
-func RespondJSON(ctx context.Context, w http.ResponseWriter, body any, status int) {
+func Bind(r *http.Request, f any) error {
+	switch r.Method {
+	case http.MethodGet, http.MethodDelete:
+		tmp, err := json.Marshal(r.URL.Query())
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(tmp, f)
+		if err != nil {
+			return err
+		}
+	case http.MethodPost, http.MethodPut:
+		if err := json.NewDecoder(r.Body).Decode(f); err != nil {
+			return fmt.Errorf("failed to bind")
+		}
+	}
+	return nil
+}
+
+func JSON(ctx context.Context, w http.ResponseWriter, body any, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
