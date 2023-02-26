@@ -8,9 +8,9 @@ import (
 
 func Router() http.Handler {
 	r := &HTTPRouter{}
-	ok := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_, _ = w.Write([]byte(`{"status": "ok"}`))
+	ok := func(c handler.Context) {
+		c.ResponseWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_, _ = c.ResponseWriter.Write([]byte(`{"status": "ok"}`))
 	}
 
 	user := handler.NewUser()

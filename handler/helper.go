@@ -7,6 +7,14 @@ import (
 	"net/http"
 )
 
+type Handler func(c Context)
+
+type Context struct {
+	ResponseWriter http.ResponseWriter
+	Request        *http.Request
+	Params         map[string]string
+}
+
 type ErrResponse struct {
 	Message string   `json:"message"`
 	Details []string `json:"details,omitempty"`

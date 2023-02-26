@@ -13,28 +13,28 @@ func NewUser() *User {
 	return &User{}
 }
 
-func (t *User) User(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (t *User) User(c Context) {
+	ctx := c.Request.Context()
 	rsp := response.User{}
-	JSON(ctx, w, rsp, http.StatusOK)
+	JSON(ctx, c.ResponseWriter, rsp, http.StatusOK)
 }
 
-func (t *User) ListUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (t *User) ListUser(c Context) {
+	ctx := c.Request.Context()
 	rsp := response.Users{}
-	JSON(ctx, w, rsp, http.StatusOK)
+	JSON(ctx, c.ResponseWriter, rsp, http.StatusOK)
 }
 
-func (t *User) AddUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (t *User) AddUser(c Context) {
+	ctx := c.Request.Context()
 
 	user := &form.User{}
-	if err := Bind(r, user); err != nil {
-		JSON(ctx, w, &ErrResponse{Message: err.Error()}, http.StatusBadRequest)
+	if err := Bind(c.Request, user); err != nil {
+		JSON(ctx, c.ResponseWriter, &ErrResponse{Message: err.Error()}, http.StatusBadRequest)
 		return
 	}
 
 	rsp := response.User{}
 
-	JSON(ctx, w, rsp, http.StatusOK)
+	JSON(ctx, c.ResponseWriter, rsp, http.StatusOK)
 }

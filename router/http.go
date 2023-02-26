@@ -3,17 +3,21 @@ package router
 import (
 	"net/http"
 	"strings"
+
+	"github.com/tMinamiii/go-http-server/handler"
 )
 
 type Path string
+
+type Handler func(c handler.Context)
 
 func (p Path) String() string {
 	return string(p)
 }
 
 type MethodHandler struct {
-	Method      string
-	HandlerFunc http.HandlerFunc
+	Method  string
+	Handler Handler
 }
 
 type HTTPRouter struct {
@@ -25,11 +29,13 @@ func (hr *HTTPRouter) Handler() http.Handler {
 	for path, fn := range hr.routes {
 		router.HandleFunc(path.String(), func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == fn.Method {
-				params := hr.getParams(r.URL.Path, path.String())
-				for k, v := range params {
-					r.URL.Query().Add(k, v)
+				params := hr.getPathParams(r.URL.Path, path.String())
+				c := handler.Context{
+					ResponseWriter: w,
+					Request:        r,
+					Params:         params,
 				}
-				fn.HandlerFunc(w, r)
+				fn.Handler(c)
 				return
 			}
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -38,7 +44,7 @@ func (hr *HTTPRouter) Handler() http.Handler {
 	return router
 }
 
-func (hr *HTTPRouter) getParams(requestPath string, routePath string) map[string]string {
+func (hr *HTTPRouter) getPathParams(requestPath string, routePath string) map[string]string {
 	params := make(map[string]string)
 	requestParts := strings.Split(requestPath, "/")
 	routeParts := strings.Split(routePath, "/")
@@ -54,18 +60,18 @@ func (hr *HTTPRouter) getParams(requestPath string, routePath string) map[string
 	return params
 }
 
-func (hr *HTTPRouter) Get(path Path, fn http.HandlerFunc) {
-	hr.routes[path] = MethodHandler{Method: http.MethodGet, HandlerFunc: fn}
+func (hr *HTTPRouter) Get(path Path, fn Handler) {
+	hr.routes[path] = MethodHandler{Method: http.MethodGet, Handler: fn}
 }
 
-func (hr *HTTPRouter) Post(path Path, fn http.HandlerFunc) {
-	hr.routes[path] = MethodHandler{Method: http.MethodPost, HandlerFunc: fn}
+func (hr *HTTPRouter) Post(path Path, fn Handler) {
+	hr.routes[path] = MethodHandler{Method: http.MethodPost, Handler: fn}
 }
 
-func (hr *HTTPRouter) Put(path Path, fn http.HandlerFunc) {
-	hr.routes[path] = MethodHandler{Method: http.MethodPut, HandlerFunc: fn}
+func (hr *HTTPRouter) Put(path Path, fn Handler) {
+	hr.routes[path] = MethodHandler{Method: http.MethodPut, Handler: fn}
 }
 
-func (hr *HTTPRouter) Delete(path Path, fn http.HandlerFunc) {
-	hr.routes[path] = MethodHandler{Method: http.MethodDelete, HandlerFunc: fn}
+func (hr *HTTPRouter) Delete(path Path, fn Handler) {
+	hr.routes[path] = MethodHandler{Method: http.MethodDelete, Handler: fn}
 }
